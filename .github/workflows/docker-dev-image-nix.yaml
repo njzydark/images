@@ -1,5 +1,9 @@
 name: Build Dev Image Nix Image
 on:
+  workflow_run:
+    workflows: ["Build Dev Image Base Image"]
+    types:
+      - completed
   push:
     branches:
       - main
