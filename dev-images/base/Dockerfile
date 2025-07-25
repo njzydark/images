@@ -59,8 +59,8 @@ RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/inst
 
 # 设置工作目录
 USER root
-WORKDIR /workspace
-RUN chown -R $USERNAME:$USERNAME /workspace
+WORKDIR /workspaces
+RUN chown -R $USERNAME:$USERNAME /workspaces
 
 USER $USERNAME
 ENV SHELL=/bin/zsh

@@ -97,7 +97,7 @@ if command -v free >/dev/null 2>&1; then
 fi
 
 if command -v df >/dev/null 2>&1; then
-    DISK_INFO=$(df -h /workspace 2>/dev/null | tail -1 | awk '{print $3 " / " $2}')
+    DISK_INFO=$(df -h /workspaces 2>/dev/null | tail -1 | awk '{print $3 " / " $2}')
     [ -n "$DISK_INFO" ] && echo -e "   • ${CYAN}Disk:${RESET}   $DISK_INFO"
 fi
 

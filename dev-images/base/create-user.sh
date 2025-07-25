@@ -59,8 +59,8 @@ chmod 0440 /etc/sudoers.d/$USERNAME
 echo "✅ Configured sudo privileges for: $USERNAME"
 
 # 设置工作目录权限
-mkdir -p /workspace
-chown -R $USERNAME:$USERNAME /workspace
-echo "✅ Configured workspace permissions"
+mkdir -p /workspaces
+chown -R $USERNAME:$USERNAME /workspaces
+echo "✅ Configured workspaces permissions"
 
 echo "🎉 User setup completed!"
