@@ -65,7 +65,6 @@ RUN chown -R $USERNAME:$USERNAME /workspaces
 USER $USERNAME
 ENV SHELL=/bin/zsh
 
-# 基础 shell 配置
 RUN echo '# === Development Environment ===' >> ~/.zshrc \
   && echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 
