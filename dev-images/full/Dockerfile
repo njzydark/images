@@ -16,3 +16,13 @@ nixpkgs#go \
 && pnpm setup \
 && rustup default stable \
 && nix store gc
+
+ENV PNPM_HOME="/home/$USERNAME/.local/share/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN pnpm add -g @anthropic-ai/claude-code @musistudio/claude-code-router
+
+RUN mkdir -p ~/.claude
+RUN mkdir -p ~/.claude-code-router
+COPY --chown=$USERNAME:$USERNAME claude-code-router.json /home/$USERNAME/.claude-code-router/config.json
+COPY --chown=$USERNAME:$USERNAME claude-code-settings.json /home/$USERNAME/.claude/settings.json
