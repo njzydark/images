@@ -1,0 +1,27 @@
+{
+  "numStartups": 270,
+  "installMethod": "global",
+  "autoUpdates": true,
+  "cachedStatsigGates": {
+    "tengu_disable_bypass_permissions_mode": false,
+    "tengu_use_file_checkpoints": true,
+    "tengu_tool_pear": false,
+    "tengu_migrate_ignore_patterns": false
+  },
+  "cachedDynamicConfigs": {
+    "tengu-top-of-feed-tip": {
+      "tip": "",
+      "color": ""
+    }
+  },
+  "autoUpdaterStatus": "enabled",
+  "userID": "887cc312e67f594ec06d5d0210f31aa8a956cb1791eb03e92b251b3c4229df2",
+  "hasCompletedOnboarding": true,
+  "lastOnboardingVersion": "2.0.37",
+  "firstStartTime": "2025-08-21T06:52:19.406Z",
+  "isQualifiedForDataSharing": false,
+  "subscriptionNoticeCount": 0,
+  "hasAvailableSubscription": false,
+  "changelogLastFetched": 1762866946136,
+  "lastReleaseNotesSeen": "2.0.37"
+}
