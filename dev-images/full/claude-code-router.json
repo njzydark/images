@@ -14,7 +14,7 @@
       "api_base_url": "https://openrouter.ai/api/v1/chat/completions",
       "api_key": "$OPENROUTER_API_KEY",
       "models": [
-        "anthropic/claude-sonnet-4.5"
+        "google/gemini-3-flash-preview"
       ],
       "transformer": {
         "use": [],
@@ -37,7 +37,7 @@
     }
   },
   "Router": {
-    "default": "openrouter,anthropic/claude-sonnet-4.5",
+    "default": "openrouter,google/gemini-3-flash-preview",
     "background": "",
     "think": "",
     "longContext": "",
