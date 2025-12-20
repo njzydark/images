@@ -10,12 +10,15 @@ nixpkgs#python313 \
 nixpkgs#python313Packages.pip \
 nixpkgs#uv \
 nixpkgs#ruff \
-nixpkgs#rustup \
 nixpkgs#go \
+nixpkgs#rustc \
+nixpkgs#cargo \
+nixpkgs#rust-analyzer \
+nixpkgs#clippy \
+nixpkgs#rustfmt \
 nixpkgs#docker \
 nixpkgs#docker-compose \
 nixpkgs#docker-buildx \
-&& rustup default stable \
 && nix store gc
 
 RUN echo 'eval "$(fnm env --use-on-cd --shell zsh)"' >> ~/.zshrc && \
