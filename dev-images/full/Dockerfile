@@ -12,6 +12,9 @@ nixpkgs#uv \
 nixpkgs#ruff \
 nixpkgs#rustup \
 nixpkgs#go \
+nixpkgs#docker \
+nixpkgs#docker-compose \
+nixpkgs#docker-buildx \
 && rustup default stable \
 && nix store gc
 
