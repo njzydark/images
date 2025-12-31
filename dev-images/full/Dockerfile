@@ -16,9 +16,6 @@ nixpkgs#cargo \
 nixpkgs#rust-analyzer \
 nixpkgs#clippy \
 nixpkgs#rustfmt \
-nixpkgs#docker \
-nixpkgs#docker-compose \
-nixpkgs#docker-buildx \
 && nix store gc
 
 RUN echo 'eval "$(fnm env --use-on-cd --shell zsh)"' >> ~/.zshrc && \

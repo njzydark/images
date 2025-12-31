@@ -14,7 +14,7 @@
       "api_base_url": "https://openrouter.ai/api/v1/chat/completions",
       "api_key": "$OPENROUTER_API_KEY",
       "models": [
-        "google/gemini-3-flash-preview"
+        "minimax/minimax-m2.1"
       ],
       "transformer": {
         "use": [],
@@ -37,7 +37,7 @@
     }
   },
   "Router": {
-    "default": "openrouter,google/gemini-3-flash-preview",
+    "default": "openrouter,minimax/minimax-m2.1",
     "background": "",
     "think": "",
     "longContext": "",
