@@ -20,7 +20,7 @@ nixpkgs#rustfmt \
 
 RUN echo 'eval "$(fnm env --use-on-cd --shell zsh)"' >> ~/.zshrc && \
     zsh -c 'source ~/.zshrc && fnm install v22' && \
-    zsh -c 'source ~/.zshrc && npm install -g @anthropic-ai/claude-code @musistudio/claude-code-router pnpm'
+    zsh -c 'source ~/.zshrc && npm install -g @anthropic-ai/claude-code @musistudio/claude-code-router opencode-ai pnpm'
 
 RUN mkdir -p ~/.claude
 RUN mkdir -p ~/.claude-code-router

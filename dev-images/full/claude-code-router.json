@@ -1,6 +1,6 @@
 {
   "LOG": true,
-  "LOG_LEVEL": "debug",
+  "LOG_LEVEL": "info",
   "CLAUDE_PATH": "",
   "HOST": "127.0.0.1",
   "PORT": 3456,
@@ -14,15 +14,12 @@
       "api_base_url": "https://openrouter.ai/api/v1/chat/completions",
       "api_key": "$OPENROUTER_API_KEY",
       "models": [
-        "minimax/minimax-m2.1"
+        "minimax/minimax-m2.1",
+        "z-ai/glm-4.7",
+        "google/gemini-3-flash-preview"
       ],
       "transformer": {
-        "use": [],
-        "anthropic/claude-sonnet-4": {
-          "use": [
-            "openrouter"
-          ]
-        }
+        "use": []
       }
     }
   ],
