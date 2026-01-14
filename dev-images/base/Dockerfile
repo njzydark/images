@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   htop \
   zsh \
   ssh \
+  tmux \
   # 网络排查工具
   dnsutils \
   iputils-ping \
