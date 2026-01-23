@@ -58,6 +58,46 @@ WORKDIR /home/$USERNAME
 # 安装 Oh My Zsh
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
+# 注入 Tmux 常用配置
+RUN cat <<EOF > /home/$USERNAME/.tmux.conf
+# 基础设置
+set -g mouse on
+set -g base-index 1
+setw -g pane-base-index 1
+set -g renumber-windows on
+set -g default-terminal "xterm-256color"
+
+# 快捷键绑定
+bind r source-file ~/.tmux.conf \; display-message "Config reloaded!"
+bind | split-window -h -c "#{pane_current_path}"
+bind - split-window -v -c "#{pane_current_path}"
+
+# Vim 风格面板切换
+bind h select-pane -L
+bind j select-pane -D
+bind k select-pane -U
+bind l select-pane -R
+
+# 快捷搜索：Prefix + f
+bind-key f copy-mode \; command-prompt -p "Search Up:" "send -X search-backward \"%%%\""
+
+# --- 状态栏样式 (High-Contrast Z) ---
+set -g status-position bottom
+set -g status-style 'fg=white,bg=black'
+set -g status-left '#[fg=cyan,bold] #S '
+
+# 右侧：Zen 模式开启时显示红底白字 [Z]
+set -g status-right "#{?window_zoomed_flag,#[fg=white]#[bg=red]#[bold] [Z] ZOOMED #[default],} #[fg=brightblack]%H:%M "
+
+# 当前窗口标签：绿底黑字
+setw -g window-status-current-style 'fg=black,bg=green,bold'
+setw -g window-status-current-format ' #I:#W#{?window_zoomed_flag, (Z),} '
+
+# 其他窗口标签：灰底
+setw -g window-status-style 'fg=brightblack,bg=black'
+setw -g window-status-format ' #I:#W#{?window_zoomed_flag,(Z),} '
+EOF
+
 # 设置工作目录
 USER root
 WORKDIR /workspaces
