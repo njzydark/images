@@ -1,0 +1,22 @@
+name: Build Docker Flood Image
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  call:
+    uses: ./.github/workflows/reusable-docker-image.yaml
+    secrets: inherit
+    with:
+      image_name: flood
+      image_tag: latest
+      skip_if_image_revision_matches_source: true
+      cache_scope: flood
+      source_repository: njzydark/flood
+      source_ref: njzy
+      context_from: source
+      context_path: .
+      dockerfile: Dockerfile
+      platforms: 'linux/amd64'

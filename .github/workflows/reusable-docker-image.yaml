@@ -48,6 +48,10 @@ on:
         required: false
         type: string
         default: context
+      platforms:
+        required: false
+        type: string
+        default: 'linux/amd64,linux/arm64'
 
 permissions:
   contents: read
@@ -121,19 +125,27 @@ jobs:
             echo '- Decision: build image' >> "$GITHUB_STEP_SUMMARY"
           fi
 
+  setup-matrix:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          IFS=',' read -ra ADDR <<< "${{ inputs.platforms }}"
+          JSON="["
+          for i in "${ADDR[@]}"; do JSON+="\"$i\","; done
+          JSON="${JSON%,}]"
+          echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
+
   build:
-    needs:
-      - check-source
+    needs: [check-source, setup-matrix]
     if: ${{ needs.check-source.outputs.should_build == 'true' }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - platform: linux/amd64
-            runner: ubuntu-24.04
-          - platform: linux/arm64
-            runner: ubuntu-24.04-arm
-    runs-on: ${{ matrix.runner }}
+        platform: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
+    runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout current repository
         uses: actions/checkout@v4
