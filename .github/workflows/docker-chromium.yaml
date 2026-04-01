@@ -12,6 +12,7 @@ jobs:
     with:
       image_name: docker-chromium
       image_tag: latest
+      skip_if_image_revision_matches_source: true
       cache_scope: docker-chromium
       source_repository: njzydark/docker-chromium
       source_ref: master
