@@ -1,0 +1,22 @@
+name: Build Docker Chromium Image
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  call:
+    uses: ./.github/workflows/reusable-docker-image.yaml
+    secrets: inherit
+    with:
+      image_name: docker-chromium
+      image_tag: latest
+      cache_scope: docker-chromium
+      source_repository: njzydark/docker-chromium
+      source_ref: master
+      context_from: source
+      context_path: .
+      dockerfile_from: source
+      dockerfile_amd64: Dockerfile
+      dockerfile_arm64: Dockerfile.aarch64
