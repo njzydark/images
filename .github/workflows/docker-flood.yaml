@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '17 3 * * *'
   workflow_dispatch:
+      inputs:
+        skip_check:
+          description: 'Skip build if image revision matches source?'
+          required: true
+          type: boolean
+          default: true
 
 jobs:
   call:
@@ -12,7 +18,7 @@ jobs:
     with:
       image_name: flood
       image_tag: latest
-      skip_if_image_revision_matches_source: false
+      skip_if_image_revision_matches_source: ${{ github.event.inputs.skip_check != 'false' }}
       cache_scope: flood
       source_repository: njzydark/flood
       source_ref: njzy
