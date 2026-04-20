@@ -19,4 +19,5 @@ jobs:
       context_from: source
       context_path: .
       dockerfile: Dockerfile
+      dockerfile_from: current
       platforms: 'linux/amd64'
