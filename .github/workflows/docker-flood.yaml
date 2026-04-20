@@ -24,6 +24,6 @@ jobs:
       source_ref: njzy
       context_from: source
       context_path: .
-      dockerfile: Dockerfile
+      dockerfile: flood/Dockerfile
       dockerfile_from: current
       platforms: 'linux/amd64'
