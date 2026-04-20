@@ -12,7 +12,7 @@ jobs:
     with:
       image_name: flood
       image_tag: latest
-      skip_if_image_revision_matches_source: true
+      skip_if_image_revision_matches_source: false
       cache_scope: flood
       source_repository: njzydark/flood
       source_ref: njzy
