@@ -28,15 +28,10 @@ RUN echo "export DENO_INSTALL=\"\$HOME/.deno\"" >> ~/.zshrc && \
 
 RUN echo 'eval "$(fnm env --use-on-cd --shell zsh)"' >> ~/.zshrc && \
     zsh -c 'source ~/.zshrc && fnm install v22' && \
-    zsh -c 'source ~/.zshrc && npm install -g pnpm @anthropic-ai/claude-code @musistudio/claude-code-router opencode-ai @openai/codex @twsxtd/hapi'
-
-RUN mkdir -p ~/.claude
-RUN mkdir -p ~/.claude-code-router
-COPY --chown=$USERNAME:$USERNAME claude-code-router.json /home/$USERNAME/.claude-code-router/config.json
-COPY --chown=$USERNAME:$USERNAME claude-code-settings.json /home/$USERNAME/.claude/settings.json
-COPY --chown=$USERNAME:$USERNAME claude.json /home/$USERNAME/.claude.json
+    zsh -c 'source ~/.zshrc && npm install -g pnpm @openai/codex @getpaseo/cli@latest'
 
 RUN mkdir -p ~/.codex
 COPY --chown=$USERNAME:$USERNAME codex-config.toml /home/$USERNAME/.codex/config.toml
 
-RUN echo 'ccr restart' >> ~/.zshrc
+RUN mkdir -p ~/.paseo
+COPY --chown=$USERNAME:$USERNAME paseo-config.json /home/$USERNAME/.paseo/config.json

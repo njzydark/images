@@ -1,0 +1,40 @@
+{
+  "daemon": {
+    "mcp": {
+      "injectIntoAgents": true
+    },
+    "autoArchiveAfterMerge": false,
+    "appendSystemPrompt": "",
+    "relay": {
+      "enabled": true,
+      "endpoint": "paseo-relay.default.svc.cluster.local:8411",
+      "publicEndpoint": "paseo-relay.default.svc.cluster.local:8411",
+      "useTls": false,
+      "publicUseTls": false
+    }
+  },
+  "agents": {
+    "providers": {
+      "claude": {
+        "enabled": false
+      },
+      "copilot": {
+        "enabled": false
+      },
+      "opencode": {
+        "enabled": false
+      },
+      "pi": {
+        "enabled": false
+      }
+    }
+  },
+  "features": {
+    "dictation": {
+      "enabled": false
+    },
+    "voiceMode": {
+      "enabled": false
+    }
+  }
+}
