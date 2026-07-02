@@ -1,0 +1,22 @@
+name: Build Docker misaka danmu server Image
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  call:
+    uses: ./.github/workflows/reusable-docker-image.yaml
+    secrets: inherit
+    with:
+      image_name: misaka_danmu_server
+      image_tag: latest
+      skip_if_image_revision_matches_source: true
+      cache_scope: misaka_danmu_server
+      source_repository: njzydark/misaka_danmu_server
+      source_ref: self-use
+      context_from: source
+      context_path: .
+      dockerfile_from: source
+      dockerfile: Dockerfile
