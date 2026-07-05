@@ -1,0 +1,55 @@
+name: Build Hermes Suite Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: 'hermes-suite source branch/ref'
+        required: true
+        type: string
+        default: self-use
+      image_tag:
+        description: 'Docker image tag'
+        required: true
+        type: string
+        default: latest
+      agent_version:
+        description: 'AGENT_VERSION build arg'
+        required: true
+        type: string
+        default: v2026.6.19
+      hermes_webui_version:
+        description: 'HERMES_WEBUI_VERSION build arg'
+        required: true
+        type: string
+        default: v0.51.742
+      enable_whatsapp_bridge:
+        description: 'ENABLE_WHATSAPP_BRIDGE build arg'
+        required: true
+        type: boolean
+        default: false
+      install_playwright_chromium:
+        description: 'INSTALL_PLAYWRIGHT_CHROMIUM build arg'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  call:
+    uses: ./.github/workflows/reusable-docker-image.yaml
+    secrets: inherit
+    with:
+      image_name: hermes-suite
+      image_tag: ${{ inputs.image_tag }}
+      cache_scope: hermes-suite
+      source_repository: njzydark/hermes-suite
+      source_ref: ${{ inputs.source_ref }}
+      context_from: source
+      context_path: .
+      dockerfile_from: source
+      dockerfile: Dockerfile
+      build_args: |
+        AGENT_VERSION=${{ inputs.agent_version }}
+        HERMES_WEBUI_VERSION=${{ inputs.hermes_webui_version }}
+        ENABLE_WHATSAPP_BRIDGE=${{ inputs.enable_whatsapp_bridge }}
+        INSTALL_PLAYWRIGHT_CHROMIUM=${{ inputs.install_playwright_chromium }}
