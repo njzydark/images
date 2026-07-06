@@ -168,8 +168,6 @@ jobs:
 
       - name: Prepare
         shell: bash
-        env:
-          BUILD_ARGS_TEXT: ${{ inputs.build_args }}
         run: |
           set -euo pipefail
 
@@ -274,12 +272,6 @@ jobs:
               echo "- Dockerfile: \`$dockerfile_path\`"
             else
               echo "- Dockerfile: \`Dockerfile\` from context"
-            fi
-            if [ -n "$BUILD_ARGS_TEXT" ]; then
-              echo "- Build args:"
-              printf '%s\n' "$BUILD_ARGS_TEXT" | while IFS= read -r build_arg; do
-                [ -n "$build_arg" ] && echo "  - \`$build_arg\`"
-              done
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
