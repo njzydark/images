@@ -506,14 +506,15 @@ jobs:
             exit 0
           fi
 
-          source_repository_url='${{ github.server_url }}/${{ github.repository }}'
+          build_repository_url='${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}'
+          source_repository_url="$build_repository_url"
           if [ -n '${{ inputs.source_repository }}' ]; then
-            source_repository_url='${{ github.server_url }}/${{ inputs.source_repository }}'
+            source_repository_url='${{ github.server_url }}/${{ inputs.source_repository }}/tree/${{ inputs.source_ref }}'
           fi
 
           {
             echo "Source repository: $source_repository_url"
-            echo "Build repository: ${{ github.server_url }}/${{ github.repository }}"
+            echo "Build repository: $build_repository_url"
             echo
             echo '---'
             echo
@@ -535,7 +536,7 @@ jobs:
           {
             echo '### Docker Hub README'
             echo "- README: \`$selected_readme\`"
-            echo "- Header: source repository \`$source_repository_url\`, build repository \`${{ github.server_url }}/${{ github.repository }}\`"
+            echo "- Header: source repository \`$source_repository_url\`, build repository \`$build_repository_url\`"
             echo "- Short description: \`$short_description\`"
           } >> "$GITHUB_STEP_SUMMARY"
 

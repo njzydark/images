@@ -21,8 +21,8 @@ Docker Hub README synchronization is enabled by default when a README can be fou
 Every synced Docker Hub README is prefixed with:
 
 ```md
-Source repository: https://github.com/<source-or-build-repository>
-Build repository: https://github.com/njzydark/images
+Source repository: https://github.com/<source-or-build-repository>/tree/<ref>
+Build repository: https://github.com/njzydark/images/tree/<workflow-branch>
 
 ---
 ```
