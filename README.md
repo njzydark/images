@@ -15,6 +15,7 @@ Forked repositories can be built here without adding GitHub Actions files to the
 Current example:
 
 - `njzydark/docker-chromium` via `.github/workflows/docker-chromium.yaml`
+- `njzydark/warpgate` via `.github/workflows/docker-warpgate.yaml`
 
 The reusable workflow supports:
 

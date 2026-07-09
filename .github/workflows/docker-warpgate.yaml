@@ -1,0 +1,22 @@
+name: Build Docker Warpgate Image
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  call:
+    uses: ./.github/workflows/reusable-docker-image.yaml
+    secrets: inherit
+    with:
+      image_name: warpgate
+      image_tag: latest
+      skip_if_image_revision_matches_source: true
+      cache_scope: warpgate
+      source_repository: njzydark/warpgate
+      source_ref: codex/support-tcp-proxy-protocol
+      context_from: source
+      context_path: .
+      dockerfile_from: source
+      dockerfile: docker/Dockerfile
