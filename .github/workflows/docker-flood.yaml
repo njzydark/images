@@ -11,6 +11,10 @@ on:
           type: boolean
           default: true
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   call:
     uses: ./.github/workflows/reusable-docker-image.yaml

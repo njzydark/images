@@ -11,6 +11,10 @@ on:
       - 'dev-images/python/Dockerfile'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   call:
     uses: ./.github/workflows/reusable-docker-image.yaml
