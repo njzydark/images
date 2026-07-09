@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '17 3 * * *'
   workflow_dispatch:
+    inputs:
+      skip_check:
+        description: 'Skip build if image revision matches source?'
+        required: true
+        type: boolean
+        default: true
 
 
 jobs:
@@ -13,7 +19,7 @@ jobs:
     with:
       image_name: misaka_danmu_server
       image_tag: latest
-      skip_if_image_revision_matches_source: true
+      skip_if_image_revision_matches_source: ${{ github.event.inputs.skip_check != 'false' }}
       cache_scope: misaka_danmu_server
       source_repository: njzydark/misaka_danmu_server
       source_ref: self-use

@@ -13,6 +13,11 @@ on:
         required: true
         type: string
         default: latest
+      skip_check:
+        description: 'Skip build if image revision matches source?'
+        required: true
+        type: boolean
+        default: false
       agent_version:
         description: 'AGENT_VERSION build arg'
         required: true
@@ -42,6 +47,7 @@ jobs:
     with:
       image_name: hermes-suite
       image_tag: ${{ inputs.image_tag }}
+      skip_if_image_revision_matches_source: ${{ inputs.skip_check }}
       cache_scope: hermes-suite
       source_repository: njzydark/hermes-suite
       source_ref: ${{ inputs.source_ref }}

@@ -4,12 +4,12 @@ on:
   schedule:
     - cron: '17 3 * * *'
   workflow_dispatch:
-      inputs:
-        skip_check:
-          description: 'Skip build if image revision matches source?'
-          required: true
-          type: boolean
-          default: true
+    inputs:
+      skip_check:
+        description: 'Skip build if image revision matches source?'
+        required: true
+        type: boolean
+        default: true
 
 
 jobs:
