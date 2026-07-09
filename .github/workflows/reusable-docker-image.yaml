@@ -56,9 +56,30 @@ on:
         required: false
         type: string
         default: ''
+      publish_dockerhub:
+        required: false
+        type: boolean
+        default: true
+      publish_ghcr:
+        required: false
+        type: boolean
+        default: true
+      sync_dockerhub_readme:
+        required: false
+        type: boolean
+        default: true
+      dockerhub_readme_path:
+        required: false
+        type: string
+        default: ''
+      short_description:
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   check-source:
@@ -81,7 +102,7 @@ jobs:
           echo "source_revision=$source_revision" >> "$GITHUB_OUTPUT"
 
       - name: Login to Docker Hub
-        if: ${{ inputs.skip_if_image_revision_matches_source && github.event_name == 'schedule' }}
+        if: ${{ inputs.skip_if_image_revision_matches_source && inputs.publish_dockerhub && github.event_name == 'schedule' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -100,6 +121,10 @@ jobs:
 
           if [ -z '${{ inputs.source_repository }}' ] || [ -z '${{ steps.source.outputs.source_revision }}' ]; then
             echo '::error::skip_if_image_revision_matches_source requires source_repository/source_ref.'
+            exit 1
+          fi
+          if [ '${{ inputs.publish_dockerhub }}' != 'true' ]; then
+            echo '::error::skip_if_image_revision_matches_source requires publish_dockerhub=true.'
             exit 1
           fi
 
@@ -252,9 +277,31 @@ jobs:
 
           echo "BUILD_CONTEXT=$context_path" >> "$GITHUB_ENV"
           echo "DOCKERFILE_PATH=$dockerfile_path" >> "$GITHUB_ENV"
-          echo "REGISTRY_IMAGE=${{ secrets.DOCKER_USERNAME }}/${{ inputs.image_name }}" >> "$GITHUB_ENV"
+          dockerhub_image='${{ secrets.DOCKER_USERNAME }}/${{ inputs.image_name }}'
+          ghcr_image='ghcr.io/njzydark/${{ inputs.image_name }}'
+          echo "DOCKERHUB_IMAGE=$dockerhub_image" >> "$GITHUB_ENV"
+          echo "GHCR_IMAGE=$ghcr_image" >> "$GITHUB_ENV"
           echo "SOURCE_REVISION=$source_revision" >> "$GITHUB_ENV"
           echo "SOURCE_REPOSITORY_URL=$source_repository_url" >> "$GITHUB_ENV"
+
+          metadata_images=''
+          if [ '${{ inputs.publish_dockerhub }}' = 'true' ]; then
+            metadata_images="$metadata_images"$'\n'"$dockerhub_image"
+          fi
+          if [ '${{ inputs.publish_ghcr }}' = 'true' ]; then
+            metadata_images="$metadata_images"$'\n'"$ghcr_image"
+          fi
+          metadata_images="${metadata_images#$'\n'}"
+          if [ -z "$metadata_images" ]; then
+            echo '::error::At least one registry must be enabled.'
+            exit 1
+          fi
+          {
+            echo 'METADATA_IMAGES<<EOF'
+            echo "$metadata_images"
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
+
           {
             echo 'BUILD_LABELS<<EOF'
             echo "org.opencontainers.image.revision=$source_revision"
@@ -266,7 +313,12 @@ jobs:
             echo "### Build Inputs"
             echo "- Platform: \`$platform\`"
             echo "- Context: \`$context_path\`"
-            echo "- Image: \`${{ secrets.DOCKER_USERNAME }}/${{ inputs.image_name }}:${{ inputs.image_tag }}\`"
+            if [ '${{ inputs.publish_dockerhub }}' = 'true' ]; then
+              echo "- Docker Hub image: \`$dockerhub_image:${{ inputs.image_tag }}\`"
+            fi
+            if [ '${{ inputs.publish_ghcr }}' = 'true' ]; then
+              echo "- GHCR image: \`$ghcr_image:${{ inputs.image_tag }}\`"
+            fi
             echo "- Source: \`$source_repository_url@$source_revision\`"
             if [ -n "$dockerfile_path" ]; then
               echo "- Dockerfile: \`$dockerfile_path\`"
@@ -279,7 +331,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY_IMAGE }}
+          images: ${{ env.METADATA_IMAGES }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -287,13 +339,23 @@ jobs:
           platforms: ${{ matrix.platform }}
 
       - name: Login to Docker Hub
+        if: ${{ inputs.publish_dockerhub }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push by digest
-        id: build
+      - name: Login to GHCR
+        if: ${{ inputs.publish_ghcr }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker Hub image by digest
+        id: build-dockerhub
+        if: ${{ inputs.publish_dockerhub }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ env.BUILD_CONTEXT }}
@@ -304,21 +366,56 @@ jobs:
             ${{ env.BUILD_LABELS }}
           build-args: |
             ${{ inputs.build_args }}
-          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ env.DOCKERHUB_IMAGE }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ env.CACHE_SCOPE }}
           cache-to: type=gha,mode=max,scope=${{ env.CACHE_SCOPE }}
 
-      - name: Export digest
-        run: |
-          mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
+      - name: Build and push GHCR image by digest
+        id: build-ghcr
+        if: ${{ inputs.publish_ghcr }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.BUILD_CONTEXT }}
+          file: ${{ env.DOCKERFILE_PATH }}
+          platforms: ${{ matrix.platform }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            ${{ env.BUILD_LABELS }}
+          build-args: |
+            ${{ inputs.build_args }}
+          outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ env.CACHE_SCOPE }}
+          cache-to: type=gha,mode=max,scope=${{ env.CACHE_SCOPE }}
 
-      - name: Upload digest
+      - name: Export Docker Hub digest
+        if: ${{ inputs.publish_dockerhub }}
+        run: |
+          mkdir -p /tmp/dockerhub-digests
+          digest="${{ steps.build-dockerhub.outputs.digest }}"
+          touch "/tmp/dockerhub-digests/${digest#sha256:}"
+
+      - name: Upload Docker Hub digest
+        if: ${{ inputs.publish_dockerhub }}
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ env.PLATFORM_PAIR }}
-          path: /tmp/digests/*
+          name: dockerhub-digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/dockerhub-digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Export GHCR digest
+        if: ${{ inputs.publish_ghcr }}
+        run: |
+          mkdir -p /tmp/ghcr-digests
+          digest="${{ steps.build-ghcr.outputs.digest }}"
+          touch "/tmp/ghcr-digests/${digest#sha256:}"
+
+      - name: Upload GHCR digest
+        if: ${{ inputs.publish_ghcr }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghcr-digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/ghcr-digests/*
           if-no-files-found: error
           retention-days: 1
 
@@ -327,36 +424,197 @@ jobs:
     needs:
       - build
     env:
-      REGISTRY_IMAGE: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image_name }}
+      DOCKERHUB_IMAGE: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image_name }}
+      GHCR_IMAGE: ghcr.io/njzydark/${{ inputs.image_name }}
     steps:
-      - name: Download digests
+      - name: Download Docker Hub digests
+        if: ${{ inputs.publish_dockerhub }}
         uses: actions/download-artifact@v4
         with:
-          path: /tmp/digests
-          pattern: digests-*
+          path: /tmp/dockerhub-digests
+          pattern: dockerhub-digests-*
+          merge-multiple: true
+
+      - name: Download GHCR digests
+        if: ${{ inputs.publish_ghcr }}
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/ghcr-digests
+          pattern: ghcr-digests-*
           merge-multiple: true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY_IMAGE }}
-
       - name: Login to Docker Hub
+        if: ${{ inputs.publish_dockerhub }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Create manifest list and push
-        working-directory: /tmp/digests
-        run: |
-          docker buildx imagetools create --tag ${{ env.REGISTRY_IMAGE }}:${{ inputs.image_tag }} \
-            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+      - name: Login to GHCR
+        if: ${{ inputs.publish_ghcr }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Inspect image
+      - name: Create Docker Hub manifest list and push
+        if: ${{ inputs.publish_dockerhub }}
+        working-directory: /tmp/dockerhub-digests
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ inputs.image_tag }}
+          docker buildx imagetools create --tag ${{ env.DOCKERHUB_IMAGE }}:${{ inputs.image_tag }} \
+            $(printf '${{ env.DOCKERHUB_IMAGE }}@sha256:%s ' *)
+
+      - name: Create GHCR manifest list and push
+        if: ${{ inputs.publish_ghcr }}
+        working-directory: /tmp/ghcr-digests
+        run: |
+          docker buildx imagetools create --tag ${{ env.GHCR_IMAGE }}:${{ inputs.image_tag }} \
+            $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
+
+      - name: Inspect Docker Hub image
+        if: ${{ inputs.publish_dockerhub }}
+        run: |
+          docker buildx imagetools inspect ${{ env.DOCKERHUB_IMAGE }}:${{ inputs.image_tag }}
+
+      - name: Inspect GHCR image
+        if: ${{ inputs.publish_ghcr }}
+        run: |
+          docker buildx imagetools inspect ${{ env.GHCR_IMAGE }}:${{ inputs.image_tag }}
+
+  sync-dockerhub-readme:
+    runs-on: ubuntu-24.04
+    needs:
+      - merge
+    if: ${{ inputs.publish_dockerhub && inputs.sync_dockerhub_readme }}
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+        with:
+          path: current
+          fetch-depth: 1
+
+      - name: Checkout source repository
+        if: ${{ inputs.source_repository != '' }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.source_repository }}
+          ref: ${{ inputs.source_ref }}
+          path: current/.sources/source
+          fetch-depth: 1
+
+      - name: Select Docker Hub README
+        id: readme
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          current_root='current'
+          source_root='current/.sources/source'
+
+          find_readme() {
+            local dir="$1"
+            [ -d "$dir" ] || return 1
+            find "$dir" -maxdepth 1 -type f \( -iname 'README' -o -iname 'README.*' \) | sort | head -n 1
+          }
+
+          add_candidate() {
+            local candidate="$1"
+            [ -n "$candidate" ] || return 0
+            printf '%s\n' "$candidate" >> /tmp/readme-candidates
+          }
+
+          : > /tmp/readme-candidates
+
+          explicit_readme='${{ inputs.dockerhub_readme_path }}'
+          if [ -n "$explicit_readme" ]; then
+            add_candidate "$explicit_readme"
+            add_candidate "$current_root/$explicit_readme"
+            if [ -d "$source_root" ]; then
+              add_candidate "$source_root/$explicit_readme"
+            fi
+          else
+            context_root="$current_root"
+            if [ '${{ inputs.context_from }}' = 'source' ]; then
+              context_root="$source_root"
+            fi
+
+            context_path="$context_root"
+            if [ -n '${{ inputs.context_path }}' ] && [ '${{ inputs.context_path }}' != '.' ]; then
+              context_path="$context_root/${{ inputs.context_path }}"
+            fi
+
+            dockerfile='${{ inputs.dockerfile }}'
+            if [ -z "$dockerfile" ] && [ -n '${{ inputs.dockerfile_amd64 }}' ]; then
+              dockerfile='${{ inputs.dockerfile_amd64 }}'
+            fi
+            if [ -z "$dockerfile" ] && [ -n '${{ inputs.dockerfile_arm64 }}' ]; then
+              dockerfile='${{ inputs.dockerfile_arm64 }}'
+            fi
+
+            if [ '${{ inputs.dockerfile_from }}' = 'source' ]; then
+              add_candidate "$(find_readme "$context_path" || true)"
+              add_candidate "$(find_readme "$source_root" || true)"
+            elif [ '${{ inputs.dockerfile_from }}' = 'current' ] && [ -n '${{ inputs.source_repository }}' ]; then
+              if [ -n "$dockerfile" ]; then
+                add_candidate "$(find_readme "$current_root/$(dirname "$dockerfile")" || true)"
+              fi
+              add_candidate "$(find_readme "$context_path" || true)"
+              add_candidate "$(find_readme "$source_root" || true)"
+            else
+              add_candidate "$(find_readme "$context_path" || true)"
+              if [ -n "$dockerfile" ] && [ '${{ inputs.dockerfile_from }}' = 'current' ]; then
+                add_candidate "$(find_readme "$current_root/$(dirname "$dockerfile")" || true)"
+              fi
+            fi
+          fi
+
+          selected_readme=''
+          while IFS= read -r candidate; do
+            if [ -f "$candidate" ]; then
+              selected_readme="$candidate"
+              break
+            fi
+          done < /tmp/readme-candidates
+
+          if [ -z "$selected_readme" ]; then
+            echo 'readme_found=false' >> "$GITHUB_OUTPUT"
+            {
+              echo '### Docker Hub README'
+              echo '- README: not found; skipped Docker Hub description sync.'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          cp "$selected_readme" /tmp/dockerhub-readme.md
+          echo 'readme_found=true' >> "$GITHUB_OUTPUT"
+          echo 'readme_filepath=/tmp/dockerhub-readme.md' >> "$GITHUB_OUTPUT"
+
+          short_description='${{ inputs.short_description }}'
+          if [ -z "$short_description" ]; then
+            if [ -n '${{ inputs.source_repository }}' ]; then
+              short_description='Forked build of ${{ inputs.source_repository }}'
+            else
+              short_description='Docker image built from ${{ github.repository }}'
+            fi
+          fi
+          echo "short_description=$short_description" >> "$GITHUB_OUTPUT"
+
+          {
+            echo '### Docker Hub README'
+            echo "- README: \`$selected_readme\`"
+            echo "- Short description: \`$short_description\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Update Docker Hub README
+        if: ${{ steps.readme.outputs.readme_found == 'true' }}
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image_name }}
+          short-description: ${{ steps.readme.outputs.short_description }}
+          readme-filepath: ${{ steps.readme.outputs.readme_filepath }}
