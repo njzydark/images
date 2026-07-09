@@ -2,6 +2,8 @@
 
 Centralized Docker image builds for personal images and forked projects.
 
+All published images are available on Docker Hub at https://hub.docker.com/u/njzy.
+
 This repository keeps image publishing in one place instead of enabling GitHub Actions across every fork. Thin workflow files under `.github/workflows/docker-*.yaml` call the shared build workflow and keep image names, tags, schedules, and dependency chains stable.
 
 Some images are built from Dockerfiles in this repository. Others check out a forked source repository during the workflow run and build from that source, with optional Dockerfile overrides kept here when needed.
