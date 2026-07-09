@@ -284,16 +284,6 @@ jobs:
           echo "SOURCE_REVISION=$source_revision" >> "$GITHUB_ENV"
           echo "SOURCE_REPOSITORY_URL=$source_repository_url" >> "$GITHUB_ENV"
 
-          image_description='${{ inputs.short_description }}'
-          if [ -z "$image_description" ]; then
-            if [ -n '${{ inputs.source_repository }}' ]; then
-              image_description='Forked build of ${{ inputs.source_repository }}'
-            else
-              image_description='Docker image built from ${{ github.repository }}'
-            fi
-          fi
-          echo "IMAGE_DESCRIPTION=$image_description" >> "$GITHUB_ENV"
-
           metadata_images=''
           if [ '${{ inputs.publish_dockerhub }}' = 'true' ]; then
             metadata_images="$metadata_images"$'\n'"$dockerhub_image"
@@ -314,11 +304,8 @@ jobs:
 
           {
             echo 'BUILD_LABELS<<EOF'
-            echo "org.opencontainers.image.description=$image_description"
             echo "org.opencontainers.image.revision=$source_revision"
             echo "org.opencontainers.image.source=$source_repository_url"
-            echo "org.opencontainers.image.title=${{ inputs.image_name }}"
-            echo "org.opencontainers.image.url=$source_repository_url"
             echo 'EOF'
           } >> "$GITHUB_ENV"
 
@@ -435,7 +422,6 @@ jobs:
   merge:
     runs-on: ubuntu-24.04
     needs:
-      - check-source
       - build
     env:
       DOCKERHUB_IMAGE: ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image_name }}
@@ -460,28 +446,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Prepare manifest annotations
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          source_repository_url='${{ github.server_url }}/${{ github.repository }}'
-          if [ -n '${{ inputs.source_repository }}' ]; then
-            source_repository_url='${{ github.server_url }}/${{ inputs.source_repository }}'
-          fi
-
-          image_description='${{ inputs.short_description }}'
-          if [ -z "$image_description" ]; then
-            if [ -n '${{ inputs.source_repository }}' ]; then
-              image_description='Forked build of ${{ inputs.source_repository }}'
-            else
-              image_description='Docker image built from ${{ github.repository }}'
-            fi
-          fi
-
-          echo "SOURCE_REPOSITORY_URL=$source_repository_url" >> "$GITHUB_ENV"
-          echo "IMAGE_DESCRIPTION=$image_description" >> "$GITHUB_ENV"
-
       - name: Login to Docker Hub
         if: ${{ inputs.publish_dockerhub }}
         uses: docker/login-action@v3
@@ -501,26 +465,14 @@ jobs:
         if: ${{ inputs.publish_dockerhub }}
         working-directory: /tmp/dockerhub-digests
         run: |
-          docker buildx imagetools create \
-            --annotation "index:org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}" \
-            --annotation "index:org.opencontainers.image.revision=${{ needs.check-source.outputs.source_revision || github.sha }}" \
-            --annotation "index:org.opencontainers.image.source=${{ env.SOURCE_REPOSITORY_URL }}" \
-            --annotation "index:org.opencontainers.image.title=${{ inputs.image_name }}" \
-            --annotation "index:org.opencontainers.image.url=${{ env.SOURCE_REPOSITORY_URL }}" \
-            --tag ${{ env.DOCKERHUB_IMAGE }}:${{ inputs.image_tag }} \
+          docker buildx imagetools create --tag ${{ env.DOCKERHUB_IMAGE }}:${{ inputs.image_tag }} \
             $(printf '${{ env.DOCKERHUB_IMAGE }}@sha256:%s ' *)
 
       - name: Create GHCR manifest list and push
         if: ${{ inputs.publish_ghcr }}
         working-directory: /tmp/ghcr-digests
         run: |
-          docker buildx imagetools create \
-            --annotation "index:org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}" \
-            --annotation "index:org.opencontainers.image.revision=${{ needs.check-source.outputs.source_revision || github.sha }}" \
-            --annotation "index:org.opencontainers.image.source=${{ env.SOURCE_REPOSITORY_URL }}" \
-            --annotation "index:org.opencontainers.image.title=${{ inputs.image_name }}" \
-            --annotation "index:org.opencontainers.image.url=${{ env.SOURCE_REPOSITORY_URL }}" \
-            --tag ${{ env.GHCR_IMAGE }}:${{ inputs.image_tag }} \
+          docker buildx imagetools create --tag ${{ env.GHCR_IMAGE }}:${{ inputs.image_tag }} \
             $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
 
       - name: Inspect Docker Hub image
@@ -637,7 +589,13 @@ jobs:
             exit 0
           fi
 
-          cp "$selected_readme" /tmp/dockerhub-readme.md
+          {
+            echo 'Build repository: https://github.com/njzydark/images'
+            echo
+            echo '---'
+            echo
+            cat "$selected_readme"
+          } > /tmp/dockerhub-readme.md
           echo 'readme_found=true' >> "$GITHUB_OUTPUT"
           echo 'readme_filepath=/tmp/dockerhub-readme.md' >> "$GITHUB_OUTPUT"
 
@@ -654,6 +612,7 @@ jobs:
           {
             echo '### Docker Hub README'
             echo "- README: \`$selected_readme\`"
+            echo '- Header: added build repository link'
             echo "- Short description: \`$short_description\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
