@@ -7,9 +7,6 @@ on:
       - 'hapi/Dockerfile'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
 
 jobs:
   call:

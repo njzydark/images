@@ -11,9 +11,6 @@ on:
       - 'dev-images/mise/Dockerfile'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
 
 jobs:
   call:

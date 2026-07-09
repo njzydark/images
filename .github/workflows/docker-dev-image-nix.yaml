@@ -11,9 +11,6 @@ on:
       - 'dev-images/nix/Dockerfile'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
 
 jobs:
   call:

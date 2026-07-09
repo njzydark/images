@@ -8,12 +8,9 @@ Some images are built from Dockerfiles in this repository. Others check out a fo
 
 ## Publishing
 
-Images are pushed to Docker Hub and GitHub Container Registry by default:
+Images are pushed to Docker Hub:
 
 - Docker Hub: `docker.io/<DOCKER_USERNAME>/<image_name>:<image_tag>`
-- GHCR: `ghcr.io/njzydark/<image_name>:<image_tag>`
-
-GHCR packages are published by this central workflow repository, so GitHub may associate them with `njzydark/images` rather than the forked source repository.
 
 ## Docker Hub README
 
@@ -22,6 +19,7 @@ Docker Hub README synchronization is enabled by default when a README can be fou
 Every synced Docker Hub README is prefixed with:
 
 ```md
+Source repository: https://github.com/<source-or-build-repository>
 Build repository: https://github.com/njzydark/images
 
 ---

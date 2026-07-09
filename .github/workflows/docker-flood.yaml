@@ -11,9 +11,6 @@ on:
           type: boolean
           default: true
 
-permissions:
-  contents: read
-  packages: write
 
 jobs:
   call:
