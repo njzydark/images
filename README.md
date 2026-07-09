@@ -42,10 +42,10 @@ Docker Hub README synchronization is enabled by default when a README can be fou
 
 ## GHCR First Publish Checklist
 
-GHCR package-to-repository linking is not fully guaranteed by a central workflow. After the first successful publish for an external source image:
+GHCR package-to-repository linking is not fully guaranteed by a central workflow. The workflow writes source metadata both as image labels and multi-arch index annotations, but an already-created package will not automatically migrate to another repository. After the first successful publish for an external source image:
 
 1. Open `https://github.com/users/njzydark/packages/container/package/<image_name>`.
 2. Confirm the package is connected to the fork repository shown by the `org.opencontainers.image.source` label.
-3. If it is not connected, use package settings to connect the repository manually.
+3. If it is connected to `njzydark/images`, use package settings to unlink that repository and connect the fork repository, or delete the mistaken GHCR package and rerun the workflow to recreate it with the fork source metadata.
 4. In package settings, grant `njzydark/images` Actions access with write permission so this central workflow can keep pushing future versions.
 5. Set the package visibility to Public if the image should be anonymously pullable.
