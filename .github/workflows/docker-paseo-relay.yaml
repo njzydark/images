@@ -1,0 +1,28 @@
+name: Build Docker Paseo Relay Image
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      skip_check:
+        description: 'Skip build if image revision matches source?'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  call:
+    uses: ./.github/workflows/reusable-docker-image.yaml
+    secrets: inherit
+    with:
+      image_name: paseo-relay
+      image_tag: latest
+      skip_if_image_revision_matches_source: ${{ github.event.inputs.skip_check != 'false' }}
+      cache_scope: paseo-relay
+      source_repository: njzydark/paseo-relay
+      source_ref: self-use
+      context_from: source
+      context_path: .
+      dockerfile_from: source
+      dockerfile: Dockerfile
