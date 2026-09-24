@@ -1,0 +1,23 @@
+name: Build Docker Paseo Image
+
+on:
+  push:
+    paths:
+      - .github/workflows/docker-paseo.yaml
+      - paseo/**
+  schedule:
+    - cron: '27 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  call:
+    uses: ./.github/workflows/reusable-docker-image.yaml
+    secrets: inherit
+    with:
+      image_name: paseo
+      image_tag: latest
+      cache_scope: paseo
+      context_path: paseo
+      dockerfile: Dockerfile
+      build_args: |
+        CODEX_REFRESH=${{ github.run_id }}
