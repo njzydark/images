@@ -1,0 +1,66 @@
+name: Build Infisical Local Test Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/docker-infisical-local-test.yaml
+      - infisical-local-test/**
+  pull_request:
+    paths:
+      - .github/workflows/docker-infisical-local-test.yaml
+      - infisical-local-test/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            arch: amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build local test image
+        uses: docker/build-push-action@v6
+        with:
+          context: infisical-local-test
+          file: infisical-local-test/Dockerfile
+          platforms: ${{ matrix.platform }}
+          tags: infisical-local-test:v0.165.16
+          load: true
+          push: false
+          cache-from: type=gha,scope=infisical-local-test-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=infisical-local-test-${{ matrix.arch }}
+
+      - name: Verify local test image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --entrypoint node infisical-local-test:v0.165.16 --input-type=module -e '
+            import { getDefaultOnPremFeatures } from "./dist/ee/services/license/license-fns.mjs";
+            import { buildUsageReporter } from "./dist/services/license-client/usage/usage-reporter.mjs";
+            import { isUpdateCheckEnabled } from "./dist/services/update-check/update-check-fns.mjs";
+            const plan = getDefaultOnPremFeatures();
+            if (plan.slug !== "enterprise" || !plan.pam || !plan.certManager) throw Error("Local test entitlements missing");
+            if (buildUsageReporter({ LICENSE_SERVER_URL: "https://example.invalid", LICENSE_KEY: "test" }) !== null) throw Error("Usage reporting is enabled");
+            if (isUpdateCheckEnabled({ platformVersion: "v0.165.16" })) throw Error("Update check is enabled");
+          '
+          docker run --rm --entrypoint sh infisical-local-test:v0.165.16 -c '
+            grep -q "TELEMETRY_CAPTURING_ENABLED: false" /backend/dist/server/plugins/serve-ui.mjs
+            grep -q "const postHog = void 0" /backend/dist/services/telemetry/telemetry-service.mjs
+            grep -q "const postHog = void 0" /backend/dist/services/telemetry/telemetry-queue.mjs
+          '
