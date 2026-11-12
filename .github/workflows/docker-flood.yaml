@@ -22,7 +22,7 @@ jobs:
       skip_if_image_revision_matches_source: ${{ github.event.inputs.skip_check != 'false' }}
       cache_scope: flood
       source_repository: njzydark/flood
-      source_ref: njzy
+      source_ref: feat-self-use
       context_from: source
       context_path: .
       dockerfile: flood/Dockerfile
